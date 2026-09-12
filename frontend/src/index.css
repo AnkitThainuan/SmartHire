@@ -4,10 +4,57 @@
 
 body {
   @apply bg-paper text-ink font-body antialiased;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(243, 244, 247, 0.94)),
+    linear-gradient(90deg, rgba(61, 90, 254, 0.05) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(61, 90, 254, 0.05) 1px, transparent 1px);
+  background-size: auto, 42px 42px, 42px 42px;
 }
 
 h1, h2, h3, h4 {
   @apply font-display;
+}
+
+@layer components {
+  .page-shell {
+    @apply max-w-6xl mx-auto px-5 sm:px-6 py-10 sm:py-12;
+  }
+
+  .page-kicker {
+    @apply text-xs font-semibold uppercase tracking-widest text-signal;
+  }
+
+  .panel {
+    @apply rounded-lg border border-mist bg-white shadow-sm;
+  }
+
+  .panel-soft {
+    @apply rounded-lg border border-mist bg-white/80 shadow-sm backdrop-blur;
+  }
+
+  .field {
+    @apply w-full rounded-md border border-mist bg-white px-4 py-2.5 outline-none transition-colors focus:border-signal;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md bg-ink px-5 py-2.5 text-sm font-semibold text-paper transition-colors hover:bg-signal disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-signal {
+    @apply inline-flex items-center justify-center rounded-md bg-signal px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md border border-mist bg-white px-5 py-2.5 text-sm font-semibold transition-colors hover:border-ink disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border border-mist bg-paper px-3 py-1 text-xs font-medium text-ink/75;
+  }
+
+  .metric-card {
+    @apply panel p-5 sm:p-6;
+  }
 }
 
 /* Visible keyboard focus, always */

@@ -26,71 +26,81 @@ const Signup = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-20">
-      <h1 className="text-3xl font-bold mb-2">Create your account</h1>
-      <p className="text-ink/60 mb-8">Set a target role and start practicing in minutes.</p>
+    <div className="page-shell">
+      <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(380px,0.7fr)] lg:items-center">
+        <section>
+          <p className="page-kicker mb-3">Candidate launchpad</p>
+          <h1 className="text-4xl font-bold leading-tight sm:text-5xl">Build an interview plan around your target role.</h1>
+          <p className="mt-4 max-w-xl text-ink/60">
+            SmartHire turns role choice, resume gaps, and mock interview results into a readiness path.
+          </p>
+        </section>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Full name</label>
-          <input
-            required
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-md border border-mist bg-white focus:border-signal outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            required
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-md border border-mist bg-white focus:border-signal outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-md border border-mist bg-white focus:border-signal outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Target role</label>
-          <select
-            value={form.targetRole}
-            onChange={(e) => setForm({ ...form, targetRole: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-md border border-mist bg-white focus:border-signal outline-none"
-          >
-            {ROLES.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
-        </div>
+        <section className="panel p-5 sm:p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Full name</label>
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Email</label>
+              <input
+                type="email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Password</label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Target role</label>
+              <div className="flex flex-wrap gap-2">
+                {ROLES.map((role) => (
+                  <button
+                    type="button"
+                    key={role}
+                    onClick={() => setForm({ ...form, targetRole: role })}
+                    className={`rounded-md border px-3 py-2 text-sm font-semibold ${
+                      form.targetRole === role ? "border-ink bg-ink text-paper" : "border-mist bg-white"
+                    }`}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {error && <p className="text-alert text-sm">{error}</p>}
+            {error && <p className="text-sm text-alert">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2.5 rounded-md bg-ink text-paper font-medium hover:bg-signal transition-colors disabled:opacity-60"
-        >
-          {loading ? "Creating account…" : "Create account"}
-        </button>
-      </form>
+            <button type="submit" disabled={loading} className="btn-primary w-full">
+              {loading ? "Creating account..." : "Create account"}
+            </button>
+          </form>
 
-      <p className="text-sm text-ink/60 mt-6">
-        Already have an account?{" "}
-        <Link to="/login" className="text-signal font-medium">
-          Log in
-        </Link>
-      </p>
+          <p className="mt-6 text-sm text-ink/60">
+            Already have an account?{" "}
+            <Link to="/login" className="font-semibold text-signal">
+              Log in
+            </Link>
+          </p>
+        </section>
+      </div>
     </div>
   );
 };

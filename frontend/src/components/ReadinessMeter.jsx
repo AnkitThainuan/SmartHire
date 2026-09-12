@@ -10,12 +10,15 @@ const colorForFill = (filled, total) => {
   return "bg-mist";
 };
 
-const ReadinessMeter = ({ score = 0, max = 100, size = "md", label }) => {
-  const filled = Math.round((score / max) * BAR_COUNT);
-  const heights = size === "lg" ? ["h-4", "h-6", "h-8", "h-10", "h-12"] : ["h-2", "h-3", "h-4", "h-5", "h-6"];
+const ReadinessMeter = ({ score = 0, max = 100, size = "md", label, compact = false }) => {
+  const numericScore = typeof score === "number" ? score : null;
+  const normalizedScore = numericScore === null ? 0 : Math.min(max, Math.max(0, numericScore));
+  const filled = Math.round((normalizedScore / max) * BAR_COUNT);
+  const heights =
+    size === "lg" ? ["h-4", "h-6", "h-8", "h-10", "h-12"] : ["h-2", "h-3", "h-4", "h-5", "h-6"];
 
   return (
-    <div className="flex items-end gap-4">
+    <div className={`flex items-end ${compact ? "gap-2" : "gap-4"}`}>
       <div className="flex items-end gap-1" aria-hidden="true">
         {Array.from({ length: BAR_COUNT }).map((_, i) => (
           <div
@@ -28,7 +31,9 @@ const ReadinessMeter = ({ score = 0, max = 100, size = "md", label }) => {
       </div>
       {label !== undefined && (
         <div>
-          <div className="font-mono text-2xl font-bold leading-none">{score ?? "—"}</div>
+          <div className={`${compact ? "text-xl" : "text-2xl"} font-mono font-bold leading-none`}>
+            {numericScore ?? "-"}
+          </div>
           {label && <div className="text-xs text-ink/60 mt-1">{label}</div>}
         </div>
       )}

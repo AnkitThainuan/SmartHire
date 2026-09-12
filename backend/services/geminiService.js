@@ -34,6 +34,17 @@ const generate = async (prompt) => {
  */
 const cleanJson = (text) => text.replace(/```json/g, "").replace(/```/g, "").trim();
 
+const toNumberOrNull = (value, min, max) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+  return Math.min(max, Math.max(min, Math.round(number)));
+};
+
+const toStringArray = (value) => {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item).trim()).filter(Boolean);
+};
+
 /**
  * Generate a set of interview questions for a given role/domain/difficulty.
  */
@@ -69,19 +80,48 @@ You are an expert interview coach evaluating a candidate's answer for a "${role}
 Question: "${question}"
 Candidate's Answer: "${answer}"
 
-Evaluate the answer on correctness, clarity, and structure. Return ONLY valid JSON in this exact shape, no markdown fences:
+Evaluate the answer on correctness, clarity, structure, specificity, and interview delivery. Return ONLY valid JSON in this exact shape, no markdown fences:
 {
   "score": <integer 0-10>,
-  "feedback": "<2-3 sentences of specific, constructive feedback>"
+  "feedback": "<2-3 sentences of specific, constructive feedback>",
+  "criteria": {
+    "correctness": <integer 0-10>,
+    "clarity": <integer 0-10>,
+    "structure": <integer 0-10>,
+    "specificity": <integer 0-10>
+  },
+  "strengths": ["<short strength>", "<short strength>"],
+  "improvements": ["<short improvement>", "<short improvement>"],
+  "followUpPrompt": "<one realistic follow-up question the interviewer could ask next>"
 }
 `;
 
   const text = cleanJson(await generate(prompt));
 
   try {
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    return {
+      score: toNumberOrNull(parsed.score, 0, 10),
+      feedback: String(parsed.feedback || "").trim(),
+      criteria: {
+        correctness: toNumberOrNull(parsed.criteria?.correctness, 0, 10),
+        clarity: toNumberOrNull(parsed.criteria?.clarity, 0, 10),
+        structure: toNumberOrNull(parsed.criteria?.structure, 0, 10),
+        specificity: toNumberOrNull(parsed.criteria?.specificity, 0, 10),
+      },
+      strengths: toStringArray(parsed.strengths).slice(0, 3),
+      improvements: toStringArray(parsed.improvements).slice(0, 3),
+      followUpPrompt: String(parsed.followUpPrompt || "").trim(),
+    };
   } catch (err) {
-    return { score: null, feedback: text };
+    return {
+      score: null,
+      feedback: text,
+      criteria: { correctness: null, clarity: null, structure: null, specificity: null },
+      strengths: [],
+      improvements: ["Try answering with a clearer opening, concrete evidence, and a brief conclusion."],
+      followUpPrompt: "",
+    };
   }
 };
 

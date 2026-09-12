@@ -24,49 +24,54 @@ const Login = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-20">
-      <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
-      <p className="text-ink/60 mb-8">Log in to pick up your prep where you left off.</p>
+    <div className="page-shell">
+      <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.6fr)] lg:items-center">
+        <section>
+          <p className="page-kicker mb-3">Welcome back</p>
+          <h1 className="text-4xl font-bold leading-tight sm:text-5xl">Pick up exactly where your prep left off.</h1>
+          <p className="mt-4 max-w-xl text-ink/60">
+            Continue mock interviews, resume checks, and readiness tracking from your candidate dashboard.
+          </p>
+        </section>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            required
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-md border border-mist bg-white focus:border-signal outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
-          <input
-            type="password"
-            required
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-md border border-mist bg-white focus:border-signal outline-none"
-          />
-        </div>
+        <section className="panel p-5 sm:p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Email</label>
+              <input
+                type="email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Password</label>
+              <input
+                type="password"
+                required
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="field"
+              />
+            </div>
 
-        {error && <p className="text-alert text-sm">{error}</p>}
+            {error && <p className="text-sm text-alert">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2.5 rounded-md bg-ink text-paper font-medium hover:bg-signal transition-colors disabled:opacity-60"
-        >
-          {loading ? "Logging in…" : "Log in"}
-        </button>
-      </form>
+            <button type="submit" disabled={loading} className="btn-primary w-full">
+              {loading ? "Logging in..." : "Log in"}
+            </button>
+          </form>
 
-      <p className="text-sm text-ink/60 mt-6">
-        New here?{" "}
-        <Link to="/signup" className="text-signal font-medium">
-          Create an account
-        </Link>
-      </p>
+          <p className="mt-6 text-sm text-ink/60">
+            New here?{" "}
+            <Link to="/signup" className="font-semibold text-signal">
+              Create an account
+            </Link>
+          </p>
+        </section>
+      </div>
     </div>
   );
 };

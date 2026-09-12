@@ -5,16 +5,18 @@
 ## What's built (7th sem scope)
 
 - **Auth**: signup/login with JWT + bcrypt
-- **Mock Interview Engine**: pick a role/domain/difficulty → Gemini generates questions →
-  answer each → Gemini scores + gives feedback → session completes with an overall
-  readiness score
+- **Mock Interview Studio**: pick a role/domain/difficulty/question count → Gemini generates
+  questions → candidates type or speak answers → SmartHire tracks time, pace, and answer mode →
+  Gemini scores correctness, clarity, structure, specificity, strengths, improvements, and
+  follow-up prompts
 - **Resume Analysis**: upload a PDF → Gemini extracts skills, gives a role-match score,
   missing keywords, and suggestions
-- **Dashboard**: score history chart, recent sessions, latest resume check
-- **Career Resources**: static tips by track (SDE / Data Analyst / HR)
+- **Dashboard**: score history chart, readiness label, practice streak, weak areas,
+  answer-quality breakdown, latest resume check, and next-best actions
+- **Career Playbook**: role-specific guidance, high-impact drills, and a 7-day prep sprint
 
-Deferred to 8th sem (by design — see project plan): voice-based interviews, video/webcam
-confidence analysis, deeper analytics, peer/mentor review, gamification.
+Future extensions: video/webcam confidence analysis, peer/mentor review, gamification,
+job-description matching, and calendar-based prep plans.
 
 ---
 
@@ -68,15 +70,16 @@ Open `http://localhost:5173`.
 ## 4. Demo flow for Monday
 
 1. Sign up with a target role (e.g. "SDE").
-2. Go to **Mock Interview** → pick domain (DSA / System Design / Behavioral) and
-   difficulty → Start. Gemini generates 5 questions live.
-3. Answer 2–3 questions to show per-answer AI scoring + feedback, then finish the
-   session to show the overall readiness score.
+2. Go to **Practice** → pick domain (DSA / System Design / Behavioral), difficulty,
+   and question count → Start. Gemini generates questions live.
+3. Use **Read question** and **Start voice** to demo browser-based interview practice,
+   then submit answers to show per-answer AI scoring, criteria bars, strengths,
+   improvements, and follow-up prompts.
 4. Go to **Resume Check** → upload any PDF resume → show the match score, detected
    skills, missing keywords, and suggestions.
-5. Go to **Dashboard** → show the score trend chart and session history building up.
-6. Mention **Career Resources** as the supporting static content, and that 8th sem
-   will add voice-based interviews and deeper analytics.
+5. Go to **Dashboard** → show the score trend chart, weak-area plan, practice streak,
+   skill profile, resume match, and recent sessions.
+6. Mention **Career Playbook** as the supporting prep content for role-specific drills.
 
 ## Project structure
 

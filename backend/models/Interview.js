@@ -6,6 +6,19 @@ const qaSchema = new mongoose.Schema(
     answer: { type: String, default: "" },
     feedback: { type: String, default: "" },
     score: { type: Number, min: 0, max: 10, default: null }, // per-question score
+    criteria: {
+      correctness: { type: Number, min: 0, max: 10, default: null },
+      clarity: { type: Number, min: 0, max: 10, default: null },
+      structure: { type: Number, min: 0, max: 10, default: null },
+      specificity: { type: Number, min: 0, max: 10, default: null },
+    },
+    strengths: [{ type: String }],
+    improvements: [{ type: String }],
+    followUpPrompt: { type: String, default: "" },
+    answerMode: { type: String, enum: ["typed", "voice"], default: "typed" },
+    durationSeconds: { type: Number, min: 0, default: null },
+    wordCount: { type: Number, min: 0, default: null },
+    paceWpm: { type: Number, min: 0, default: null },
   },
   { _id: false }
 );

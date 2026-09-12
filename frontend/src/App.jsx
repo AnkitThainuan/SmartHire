@@ -15,49 +15,85 @@ const Landing = () => {
   const { user } = useAuth();
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-20">
-      <div className="grid md:grid-cols-2 gap-12 items-center">
+    <div className="page-shell">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.8fr)] lg:items-center">
         <div>
-          <h1 className="text-5xl font-bold leading-tight mb-6">
-            Walk into your next interview <span className="text-signal">already warmed up.</span>
+          <p className="page-kicker mb-3">AI interview readiness</p>
+          <h1 className="max-w-3xl text-5xl font-bold leading-tight">
+            SmartHire
+            <span className="mt-2 block text-3xl text-signal sm:text-4xl">Practice, speak, score, improve.</span>
           </h1>
-          <p className="text-lg text-ink/70 mb-8">
-            SmartHire runs AI mock interviews tailored to your target role, scores your resume
-            against it, and tracks your readiness session over session — so you know exactly
-            where you stand before the real thing.
+          <p className="mt-6 max-w-2xl text-lg text-ink/70">
+            Run role-specific mock interviews, answer by voice, analyze your resume, and turn every result into a
+            focused next step before the real round.
           </p>
-          <div className="flex gap-4">
+          <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to={user ? "/interview" : "/signup"}
-              className="px-6 py-3 rounded-md bg-ink text-paper font-medium hover:bg-signal transition-colors"
+              className="btn-primary px-6 py-3"
             >
-              {user ? "Start a mock interview" : "Get started free"}
+              {user ? "Start practice" : "Get started free"}
             </Link>
-            <Link
-              to="/resources"
-              className="px-6 py-3 rounded-md border border-mist font-medium hover:border-ink transition-colors"
-            >
-              Browse resources
+            <Link to="/resources" className="btn-secondary px-6 py-3">
+              Open playbook
             </Link>
+          </div>
+
+          <div className="mt-10 grid gap-3 sm:grid-cols-3">
+            {[
+              ["Voice mode", "Browser speech-to-text practice"],
+              ["Coach scoring", "Correctness, clarity, structure"],
+              ["Action plan", "Weak areas and resume gaps"],
+            ].map(([title, detail]) => (
+              <div key={title} className="rounded-md border border-mist bg-white/75 p-4">
+                <p className="text-sm font-semibold">{title}</p>
+                <p className="mt-1 text-xs text-ink/60">{detail}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-mist p-8">
-          <p className="text-sm text-ink/60 mb-4">Sample readiness score</p>
+        <div className="panel p-6 sm:p-8">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold">Readiness snapshot</p>
+              <p className="text-xs text-ink/60">Sample candidate view</p>
+            </div>
+            <span className="chip">Live prep</span>
+          </div>
           <ReadinessMeter score={78} label="Almost There" size="lg" />
-          <div className="mt-6 space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-ink/60">DSA</span>
-              <span className="font-mono font-semibold">82/100</span>
+          <div className="mt-8 space-y-4 text-sm">
+            <div>
+              <div className="mb-1 flex justify-between">
+                <span className="text-ink/60">DSA</span>
+                <span className="font-mono font-semibold">82/100</span>
+              </div>
+              <div className="h-2 rounded-full bg-mist">
+                <div className="h-2 rounded-full bg-momentum" style={{ width: "82%" }} />
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-ink/60">System Design</span>
-              <span className="font-mono font-semibold">71/100</span>
+            <div>
+              <div className="mb-1 flex justify-between">
+                <span className="text-ink/60">System Design</span>
+                <span className="font-mono font-semibold">71/100</span>
+              </div>
+              <div className="h-2 rounded-full bg-mist">
+                <div className="h-2 rounded-full bg-signal" style={{ width: "71%" }} />
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-ink/60">Resume match</span>
-              <span className="font-mono font-semibold">80%</span>
+            <div>
+              <div className="mb-1 flex justify-between">
+                <span className="text-ink/60">Resume match</span>
+                <span className="font-mono font-semibold">80%</span>
+              </div>
+              <div className="h-2 rounded-full bg-mist">
+                <div className="h-2 rounded-full bg-momentum" style={{ width: "80%" }} />
+              </div>
             </div>
+          </div>
+
+          <div className="mt-8 rounded-md border border-signal/25 bg-signal/5 p-4 text-sm text-ink/70">
+            Next best action: record one system design answer out loud and tighten the trade-off section.
           </div>
         </div>
       </div>

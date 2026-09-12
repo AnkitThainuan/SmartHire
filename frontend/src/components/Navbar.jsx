@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const Navbar = () => {
@@ -10,10 +10,15 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const linkClass = ({ isActive }) =>
+    `rounded-md px-3 py-2 transition-colors ${
+      isActive ? "bg-ink text-paper" : "text-ink/70 hover:bg-white hover:text-ink"
+    }`;
+
   return (
-    <header className="sticky top-0 z-20 bg-paper/90 backdrop-blur border-b border-mist">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-display font-bold text-lg">
+    <header className="sticky top-0 z-20 border-b border-mist bg-paper/95 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-3 sm:px-6 lg:h-16 lg:flex-row lg:items-center lg:justify-between lg:py-0">
+        <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold">
           <span className="flex items-end gap-0.5" aria-hidden="true">
             <span className="w-1 h-2 bg-alert rounded-sm" />
             <span className="w-1 h-3 bg-signal rounded-sm" />
@@ -24,25 +29,32 @@ const Navbar = () => {
         </Link>
 
         {user ? (
-          <nav className="flex items-center gap-6 text-sm font-medium">
-            <Link to="/dashboard" className="hover:text-signal">Dashboard</Link>
-            <Link to="/interview" className="hover:text-signal">Mock Interview</Link>
-            <Link to="/resume" className="hover:text-signal">Resume Check</Link>
-            <Link to="/resources" className="hover:text-signal">Resources</Link>
+          <nav className="flex flex-wrap items-center gap-1 text-sm font-semibold">
+            <NavLink to="/dashboard" className={linkClass}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/interview" className={linkClass}>
+              Practice
+            </NavLink>
+            <NavLink to="/resume" className={linkClass}>
+              Resume
+            </NavLink>
+            <NavLink to="/resources" className={linkClass}>
+              Playbook
+            </NavLink>
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 rounded-md border border-mist hover:border-ink transition-colors"
+              className="ml-1 rounded-md border border-mist bg-white px-3 py-2 transition-colors hover:border-ink"
             >
               Log out
             </button>
           </nav>
         ) : (
-          <nav className="flex items-center gap-3 text-sm font-medium">
-            <Link to="/login" className="hover:text-signal">Log in</Link>
-            <Link
-              to="/signup"
-              className="px-4 py-2 rounded-md bg-ink text-paper hover:bg-signal transition-colors"
-            >
+          <nav className="flex items-center gap-2 text-sm font-semibold">
+            <Link to="/login" className="rounded-md px-3 py-2 text-ink/70 transition-colors hover:bg-white hover:text-ink">
+              Log in
+            </Link>
+            <Link to="/signup" className="btn-primary px-4 py-2">
               Get started
             </Link>
           </nav>
