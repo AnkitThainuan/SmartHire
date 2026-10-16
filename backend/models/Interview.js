@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const qaSchema = new mongoose.Schema(
   {
     question: { type: String, required: true },
+    type: { type: String, enum: ["text", "mcq"], default: "text" },
     answer: { type: String, default: "" },
     feedback: { type: String, default: "" },
     score: { type: Number, min: 0, max: 10, default: null }, // per-question score
@@ -19,6 +20,11 @@ const qaSchema = new mongoose.Schema(
     durationSeconds: { type: Number, min: 0, default: null },
     wordCount: { type: Number, min: 0, default: null },
     paceWpm: { type: Number, min: 0, default: null },
+    // MCQ-only fields (aptitude practice mode)
+    options: [{ type: String }],
+    correctOptionIndex: { type: Number, default: null },
+    selectedOptionIndex: { type: Number, default: null },
+    explanation: { type: String, default: "" },
   },
   { _id: false }
 );

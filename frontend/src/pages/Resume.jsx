@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../api/axios.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import ReadinessMeter from "../components/ReadinessMeter.jsx";
+import RoleSelect from "../components/RoleSelect.jsx";
 
 const Resume = () => {
   const { user } = useAuth();
@@ -63,15 +64,7 @@ const Resume = () => {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <section className="panel p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="mb-1 block text-sm font-semibold">Target role</label>
-              <input
-                value={targetRole}
-                onChange={(e) => setTargetRole(e.target.value)}
-                placeholder="e.g. SDE, Backend Developer"
-                className="field"
-              />
-            </div>
+            <RoleSelect value={targetRole} onChange={setTargetRole} />
 
             <div>
               <label className="mb-2 block text-sm font-semibold">Resume PDF</label>

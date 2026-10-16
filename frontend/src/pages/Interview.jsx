@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../api/axios.js";
 import ReadinessMeter from "../components/ReadinessMeter.jsx";
 import VoicePracticePanel from "../components/VoicePracticePanel.jsx";
+import RoleSelect from "../components/RoleSelect.jsx";
 
 const DOMAINS = [
   { label: "DSA", detail: "Algorithms, patterns, complexity" },
@@ -12,8 +13,19 @@ const DOMAINS = [
   { label: "Project Deep-Dive", detail: "Resume projects under pressure" },
 ];
 
+const APTITUDE_TOPICS = [
+  { label: "Quantitative Aptitude", detail: "Numbers, percentages, time-speed-distance" },
+  { label: "Logical Reasoning", detail: "Series, puzzles, arrangements" },
+  { label: "Verbal Ability", detail: "Grammar, comprehension, vocabulary" },
+  { label: "Data Interpretation", detail: "Tables, graphs, and charts" },
+];
+
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 const QUESTION_COUNTS = [3, 5, 7];
+const MODES = [
+  { key: "text", label: "Interview Q&A", detail: "Open-ended answers, coached like a real interviewer" },
+  { key: "mcq", label: "Aptitude MCQs", detail: "Timed multiple-choice, instant right/wrong" },
+];
 
 const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60);
@@ -46,7 +58,10 @@ const CriteriaBar = ({ label, value }) => (
   </div>
 );
 
+const OPTION_LETTERS = ["A", "B", "C", "D"];
+
 const Interview = () => {
+  const [mode, setMode] = useState("text");
   const [setup, setSetup] = useState({ role: "SDE", domain: DOMAINS[0].label, difficulty: "Medium", count: 5 });
   const [interview, setInterview] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -57,6 +72,18 @@ const Interview = () => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [usedVoice, setUsedVoice] = useState(false);
 
+  // MCQ-only state
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [mcqRevealed, setMcqRevealed] = useState(false);
+
+  const topicList = mode === "mcq" ? APTITUDE_TOPICS : DOMAINS;
+
+  useEffect(() => {
+    // Keep the domain in sync with whichever topic list is active for the current mode.
+    setSetup((s) => ({ ...s, domain: topicList[0].label }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
   useEffect(() => {
     if (!interview || interview.status === "completed") return undefined;
 
@@ -64,6 +91,8 @@ const Interview = () => {
     setQuestionStartedAt(startedAt);
     setElapsedSeconds(0);
     setUsedVoice(false);
+    setSelectedOption(null);
+    setMcqRevealed(false);
 
     const timer = window.setInterval(() => {
       setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
@@ -85,7 +114,7 @@ const Interview = () => {
     setError("");
     setLoading(true);
     try {
-      const { data } = await api.post("/interviews/start", setup);
+      const { data } = await api.post("/interviews/start", { ...setup, format: mode === "mcq" ? "mcq" : "text" });
       setInterview(data);
       setCurrentIndex(0);
       setAnswer("");
@@ -129,6 +158,40 @@ const Interview = () => {
     }
   };
 
+  const submitMcqAnswer = async () => {
+    if (selectedOption === null) return;
+    setLoading(true);
+    setError("");
+    try {
+      const { data } = await api.post(`/interviews/${interview._id}/answer`, {
+        questionIndex: currentIndex,
+        selectedOptionIndex: selectedOption,
+      });
+      setInterview(data);
+      setMcqRevealed(true);
+    } catch (err) {
+      setError(err.response?.data?.message || "Couldn't submit that answer. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const continueAfterMcq = async () => {
+    if (currentIndex + 1 < interview.questions.length) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      setLoading(true);
+      try {
+        const { data: completed } = await api.post(`/interviews/${interview._id}/complete`);
+        setInterview(completed);
+      } catch (err) {
+        setError(err.response?.data?.message || "Couldn't finish the session. Try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   if (!interview) {
     return (
       <div className="page-shell">
@@ -143,17 +206,25 @@ const Interview = () => {
               answer like an interview coach.
             </p>
 
-            <form onSubmit={startSession} className="panel mt-8 space-y-6 p-5 sm:p-6">
-              <div className="grid gap-4 sm:grid-cols-[1fr_150px]">
-                <div>
-                  <label className="mb-1 block text-sm font-semibold">Target role</label>
-                  <input
-                    value={setup.role}
-                    onChange={(e) => setSetup({ ...setup, role: e.target.value })}
-                    className="field"
-                    placeholder="e.g. SDE, Data Analyst"
-                  />
-                </div>
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              {MODES.map((m) => (
+                <button
+                  type="button"
+                  key={m.key}
+                  onClick={() => setMode(m.key)}
+                  className={`rounded-lg border p-4 text-left transition-colors ${
+                    mode === m.key ? "border-signal bg-signal/5" : "border-mist bg-white hover:border-ink"
+                  }`}
+                >
+                  <span className="block text-sm font-semibold">{m.label}</span>
+                  <span className="mt-1 block text-xs text-ink/60">{m.detail}</span>
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={startSession} className="panel mt-6 space-y-6 p-5 sm:p-6">
+              <div className="grid gap-5 sm:grid-cols-[1fr_150px]">
+                <RoleSelect value={setup.role} onChange={(role) => setSetup({ ...setup, role })} />
                 <div>
                   <label className="mb-1 block text-sm font-semibold">Questions</label>
                   <select
@@ -171,9 +242,11 @@ const Interview = () => {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold">Domain</label>
+                <label className="mb-2 block text-sm font-semibold">
+                  {mode === "mcq" ? "Aptitude topic" : "Domain"}
+                </label>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {DOMAINS.map((domain) => (
+                  {topicList.map((domain) => (
                     <button
                       type="button"
                       key={domain.label}
@@ -212,7 +285,7 @@ const Interview = () => {
               {error && <p className="text-sm text-alert">{error}</p>}
 
               <button type="submit" disabled={loading || !setup.role.trim()} className="btn-signal w-full">
-                {loading ? "Generating questions..." : "Start interview"}
+                {loading ? "Generating questions..." : mode === "mcq" ? "Start aptitude quiz" : "Start interview"}
               </button>
             </form>
           </section>
@@ -220,13 +293,10 @@ const Interview = () => {
           <aside className="panel-soft p-5">
             <p className="text-sm font-semibold">Session stack</p>
             <div className="mt-4 space-y-3 text-sm">
-              {[
-                "AI-generated questions",
-                "Voice answers and playback",
-                "Timed delivery metrics",
-                "Follow-up prompts",
-                "Dashboard weak-area plan",
-              ].map((item) => (
+              {(mode === "mcq"
+                ? ["AI-generated MCQs", "Instant right/wrong feedback", "Explanation per question", "Dashboard accuracy tracking"]
+                : ["AI-generated questions", "Voice answers and playback", "Timed delivery metrics", "Follow-up prompts", "Dashboard weak-area plan"]
+              ).map((item) => (
                 <div key={item} className="flex items-center justify-between gap-4 border-b border-mist pb-3 last:border-0">
                   <span className="text-ink/70">{item}</span>
                   <span className="h-2 w-2 rounded-full bg-momentum" />
@@ -239,19 +309,23 @@ const Interview = () => {
     );
   }
 
+  const isMcqSession = interview.questions[0]?.type === "mcq";
+
   if (interview.status === "completed") {
     const voiceAnswers = interview.questions.filter((q) => q.answerMode === "voice").length;
     const pacedAnswers = interview.questions.filter((q) => q.paceWpm);
     const averagePace = Math.round(
       interview.questions.reduce((sum, q) => sum + (q.paceWpm || 0), 0) / Math.max(1, pacedAnswers.length)
     );
+    const correctCount = interview.questions.filter((q) => q.score === 10).length;
+    const accuracy = Math.round((correctCount / interview.questions.length) * 100);
 
     return (
       <div className="page-shell">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="page-kicker mb-3">Session complete</p>
-            <h1 className="text-4xl font-bold">Your interview debrief</h1>
+            <h1 className="text-4xl font-bold">{isMcqSession ? "Your aptitude results" : "Your interview debrief"}</h1>
             <p className="mt-2 text-ink/60">
               {interview.role} · {interview.domain} · {interview.difficulty}
             </p>
@@ -271,84 +345,150 @@ const Interview = () => {
             <p className="mb-3 text-sm text-ink/60">Overall readiness</p>
             <ReadinessMeter score={interview.overallScore ?? 0} label={interview.readinessLabel} size="lg" />
           </div>
-          <div className="metric-card">
-            <p className="text-sm text-ink/60">Voice answers</p>
-            <p className="mt-3 font-mono text-4xl font-bold">{voiceAnswers}</p>
-          </div>
-          <div className="metric-card">
-            <p className="text-sm text-ink/60">Avg. pace</p>
-            <p className="mt-3 font-mono text-4xl font-bold">{averagePace || "-"}</p>
-            <p className="mt-1 text-xs text-ink/50">words/min</p>
-          </div>
+          {isMcqSession ? (
+            <>
+              <div className="metric-card">
+                <p className="text-sm text-ink/60">Correct answers</p>
+                <p className="mt-3 font-mono text-4xl font-bold">
+                  {correctCount}<span className="text-lg text-ink/40">/{interview.questions.length}</span>
+                </p>
+              </div>
+              <div className="metric-card">
+                <p className="text-sm text-ink/60">Accuracy</p>
+                <p className="mt-3 font-mono text-4xl font-bold">{accuracy}%</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="metric-card">
+                <p className="text-sm text-ink/60">Voice answers</p>
+                <p className="mt-3 font-mono text-4xl font-bold">{voiceAnswers}</p>
+              </div>
+              <div className="metric-card">
+                <p className="text-sm text-ink/60">Avg. pace</p>
+                <p className="mt-3 font-mono text-4xl font-bold">{averagePace || "-"}</p>
+                <p className="mt-1 text-xs text-ink/50">words/min</p>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="space-y-4">
-          {interview.questions.map((q, i) => (
-            <section key={i} className="panel p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-signal">Question {i + 1}</p>
-                  <h2 className="mt-2 text-lg font-semibold">{q.question}</h2>
-                  <p className="mt-3 text-sm text-ink/60">Your answer: {q.answer || "-"}</p>
-                </div>
-                <div className="shrink-0 rounded-md bg-paper px-4 py-3 text-center">
-                  <p className="font-mono text-2xl font-bold text-signal">{q.score ?? "-"}/10</p>
-                  <p className="text-xs text-ink/50">{q.answerMode === "voice" ? "voice" : "typed"}</p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                <div>
-                  <p className="text-sm font-semibold">Coach feedback</p>
-                  <p className="mt-2 text-sm text-ink/70">{q.feedback}</p>
-
-                  {q.followUpPrompt && (
-                    <div className="mt-4 rounded-md border border-signal/25 bg-signal/5 p-4 text-sm text-ink/75">
-                      <span className="font-semibold">Follow-up: </span>
-                      {q.followUpPrompt}
-                    </div>
-                  )}
+          {interview.questions.map((q, i) =>
+            q.type === "mcq" ? (
+              <section key={i} className="panel p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-3xl">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-signal">Question {i + 1}</p>
+                    <h2 className="mt-2 text-lg font-semibold">{q.question}</h2>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-md px-4 py-2 text-center text-sm font-semibold ${
+                      q.score === 10 ? "bg-momentum/10 text-momentum" : "bg-alert/10 text-alert"
+                    }`}
+                  >
+                    {q.score === 10 ? "Correct" : "Incorrect"}
+                  </span>
                 </div>
 
-                <div className="space-y-3">
-                  <CriteriaBar label="Correctness" value={q.criteria?.correctness} />
-                  <CriteriaBar label="Clarity" value={q.criteria?.clarity} />
-                  <CriteriaBar label="Structure" value={q.criteria?.structure} />
-                  <CriteriaBar label="Specificity" value={q.criteria?.specificity} />
-                </div>
-              </div>
-
-              {(q.strengths?.length > 0 || q.improvements?.length > 0) && (
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  {q.strengths?.length > 0 && (
-                    <div>
-                      <p className="mb-2 text-sm font-semibold">Worked well</p>
-                      <div className="flex flex-wrap gap-2">
-                        {q.strengths.map((item, index) => (
-                          <span className="chip border-momentum/40 bg-momentum/10" key={index}>
-                            {item}
-                          </span>
-                        ))}
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {q.options.map((opt, oi) => {
+                    const isCorrect = oi === q.correctOptionIndex;
+                    const isChosen = oi === q.selectedOptionIndex;
+                    return (
+                      <div
+                        key={oi}
+                        className={`rounded-md border px-4 py-2.5 text-sm ${
+                          isCorrect
+                            ? "border-momentum bg-momentum/10"
+                            : isChosen
+                            ? "border-alert bg-alert/10"
+                            : "border-mist bg-white"
+                        }`}
+                      >
+                        <span className="mr-2 font-mono text-xs text-ink/40">{OPTION_LETTERS[oi]}</span>
+                        {opt}
+                        {isCorrect && <span className="ml-2 text-xs font-semibold text-momentum">✓ correct</span>}
+                        {isChosen && !isCorrect && <span className="ml-2 text-xs font-semibold text-alert">your pick</span>}
                       </div>
-                    </div>
-                  )}
-
-                  {q.improvements?.length > 0 && (
-                    <div>
-                      <p className="mb-2 text-sm font-semibold">Improve next</p>
-                      <div className="flex flex-wrap gap-2">
-                        {q.improvements.map((item, index) => (
-                          <span className="chip border-alert/35 bg-alert/10 text-alert" key={index}>
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
-              )}
-            </section>
-          ))}
+
+                {q.explanation && (
+                  <div className="mt-4 rounded-md border border-mist bg-paper/60 p-4 text-sm text-ink/70">
+                    <span className="font-semibold">Explanation: </span>
+                    {q.explanation}
+                  </div>
+                )}
+              </section>
+            ) : (
+              <section key={i} className="panel p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-3xl">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-signal">Question {i + 1}</p>
+                    <h2 className="mt-2 text-lg font-semibold">{q.question}</h2>
+                    <p className="mt-3 text-sm text-ink/60">Your answer: {q.answer || "-"}</p>
+                  </div>
+                  <div className="shrink-0 rounded-md bg-paper px-4 py-3 text-center">
+                    <p className="font-mono text-2xl font-bold text-signal">{q.score ?? "-"}/10</p>
+                    <p className="text-xs text-ink/50">{q.answerMode === "voice" ? "voice" : "typed"}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                  <div>
+                    <p className="text-sm font-semibold">Coach feedback</p>
+                    <p className="mt-2 text-sm text-ink/70">{q.feedback}</p>
+
+                    {q.followUpPrompt && (
+                      <div className="mt-4 rounded-md border border-signal/25 bg-signal/5 p-4 text-sm text-ink/75">
+                        <span className="font-semibold">Follow-up: </span>
+                        {q.followUpPrompt}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <CriteriaBar label="Correctness" value={q.criteria?.correctness} />
+                    <CriteriaBar label="Clarity" value={q.criteria?.clarity} />
+                    <CriteriaBar label="Structure" value={q.criteria?.structure} />
+                    <CriteriaBar label="Specificity" value={q.criteria?.specificity} />
+                  </div>
+                </div>
+
+                {(q.strengths?.length > 0 || q.improvements?.length > 0) && (
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    {q.strengths?.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-sm font-semibold">Worked well</p>
+                        <div className="flex flex-wrap gap-2">
+                          {q.strengths.map((item, index) => (
+                            <span className="chip border-momentum/40 bg-momentum/10" key={index}>
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {q.improvements?.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-sm font-semibold">Improve next</p>
+                        <div className="flex flex-wrap gap-2">
+                          {q.improvements.map((item, index) => (
+                            <span className="chip border-alert/35 bg-alert/10 text-alert" key={index}>
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+            )
+          )}
         </div>
       </div>
     );
@@ -357,6 +497,89 @@ const Interview = () => {
   const question = interview.questions[currentIndex];
   const progress = Math.round(((currentIndex + 1) / interview.questions.length) * 100);
 
+  // ----- MCQ practice screen -----
+  if (question.type === "mcq") {
+    return (
+      <div className="page-shell">
+        <div className="mx-auto max-w-2xl">
+          <section className="panel p-5 sm:p-6">
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              <span className="chip">
+                Question {currentIndex + 1} of {interview.questions.length}
+              </span>
+              <span className="chip">{interview.domain}</span>
+              <span className="chip">{interview.difficulty}</span>
+            </div>
+
+            <div className="mb-5 h-2 overflow-hidden rounded-full bg-mist">
+              <div className="h-full rounded-full bg-signal transition-all" style={{ width: `${progress}%` }} />
+            </div>
+
+            <h1 className="text-xl font-semibold leading-snug sm:text-2xl">{question.question}</h1>
+
+            <div className="mt-6 space-y-2.5">
+              {question.options.map((opt, oi) => {
+                const isChosen = selectedOption === oi;
+                const isCorrect = oi === question.correctOptionIndex;
+                let stateClass = "border-mist bg-white hover:border-signal";
+                if (mcqRevealed) {
+                  if (isCorrect) stateClass = "border-momentum bg-momentum/10";
+                  else if (isChosen) stateClass = "border-alert bg-alert/10";
+                  else stateClass = "border-mist bg-white opacity-60";
+                } else if (isChosen) {
+                  stateClass = "border-signal bg-signal/5";
+                }
+
+                return (
+                  <button
+                    key={oi}
+                    type="button"
+                    disabled={mcqRevealed || loading}
+                    onClick={() => setSelectedOption(oi)}
+                    className={`flex w-full items-center gap-3 rounded-md border px-4 py-3 text-left text-sm transition-colors disabled:cursor-not-allowed ${stateClass}`}
+                  >
+                    <span className="font-mono text-xs text-ink/40">{OPTION_LETTERS[oi]}</span>
+                    <span className="flex-1">{opt}</span>
+                    {mcqRevealed && isCorrect && <span className="text-xs font-semibold text-momentum">✓</span>}
+                    {mcqRevealed && isChosen && !isCorrect && <span className="text-xs font-semibold text-alert">✕</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {mcqRevealed && question.explanation && (
+              <div className="mt-5 rounded-md border border-mist bg-paper/60 p-4 text-sm text-ink/70">
+                <span className="font-semibold">
+                  {question.selectedOptionIndex === question.correctOptionIndex ? "Correct — " : "Not quite — "}
+                </span>
+                {question.explanation}
+              </div>
+            )}
+
+            {error && <p className="mt-4 text-sm text-alert">{error}</p>}
+
+            <div className="mt-6">
+              {!mcqRevealed ? (
+                <button
+                  onClick={submitMcqAnswer}
+                  disabled={selectedOption === null || loading}
+                  className="btn-signal w-full"
+                >
+                  {loading ? "Checking..." : "Submit answer"}
+                </button>
+              ) : (
+                <button onClick={continueAfterMcq} disabled={loading} className="btn-signal w-full">
+                  {loading ? "Finishing..." : currentIndex + 1 < interview.questions.length ? "Next question" : "Finish quiz"}
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  // ----- Text/voice practice screen (existing flow) -----
   return (
     <div className="page-shell">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">

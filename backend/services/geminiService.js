@@ -1,8 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Created lazily (on first use, not at import time) so this always picks up
-// the real GEMINI_API_KEY value rather than risking a stale/undefined read
-// if this module happens to load before .env is parsed.
 const MODEL_NAME = "gemini-3.6-flash";
 let _ai = null;
 const getClient = () => {
@@ -67,6 +64,65 @@ Return ONLY a JSON array of strings, nothing else, no markdown fences. Example:
       .map((q) => q.replace(/^\d+[\.\)]\s*/, "").trim())
       .filter(Boolean)
       .slice(0, count);
+  }
+};
+
+/**
+ * Generate a set of multiple-choice aptitude questions.
+ * Each question has 4 options, exactly one correct, and a short explanation.
+ */
+export const generateMCQQuestions = async ({ topic, difficulty, count = 5 }) => {
+  const prompt = `
+You are an expert aptitude test setter for campus placements. Generate ${count} multiple-choice questions on the topic "${topic}", at "${difficulty}" difficulty, in the style of standard campus placement aptitude tests.
+
+Return ONLY a JSON array, no markdown fences, in this exact shape:
+[
+  {
+    "question": "<question text>",
+    "options": ["<option A>", "<option B>", "<option C>", "<option D>"],
+    "correctOptionIndex": <integer 0-3, index of the correct option in "options">,
+    "explanation": "<1-2 sentence explanation of the correct answer>"
+  }
+]
+
+Rules: exactly 4 options per question, exactly one correct answer, options should not repeat, keep questions self-contained (no images/diagrams needed).
+`;
+
+  const text = cleanJson(await generate(prompt));
+
+  try {
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) throw new Error("not an array");
+    return parsed
+      .map((q) => {
+        const options = toStringArray(q.options).slice(0, 4);
+        const correctOptionIndex = toNumberOrNull(q.correctOptionIndex, 0, 3);
+        if (options.length !== 4 || correctOptionIndex === null) return null;
+        return {
+          question: String(q.question || "").trim(),
+          options,
+          correctOptionIndex,
+          explanation: String(q.explanation || "").trim(),
+        };
+      })
+      .filter((q) => q && q.question)
+      .slice(0, count);
+  } catch (err) {
+    // Fallback: a couple of safe generic aptitude questions so a demo never hard-fails
+    return [
+      {
+        question: "If a train travels 60 km in 45 minutes, what is its speed in km/h?",
+        options: ["60 km/h", "75 km/h", "80 km/h", "90 km/h"],
+        correctOptionIndex: 2,
+        explanation: "Speed = distance / time = 60 km / 0.75 h = 80 km/h.",
+      },
+      {
+        question: "Find the next number in the series: 2, 6, 12, 20, 30, ?",
+        options: ["36", "40", "42", "44"],
+        correctOptionIndex: 2,
+        explanation: "Differences are 4, 6, 8, 10, 12 — so 30 + 12 = 42.",
+      },
+    ].slice(0, count);
   }
 };
 
